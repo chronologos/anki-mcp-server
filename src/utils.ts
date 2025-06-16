@@ -40,6 +40,7 @@ export interface AnkiConfig {
 	timeout: number;
 	retryTimeout: number;
 	defaultDeck: string;
+	apiKey?: string;
 }
 
 /**
@@ -51,6 +52,7 @@ export const DEFAULT_CONFIG: AnkiConfig = {
 	timeout: 5000,
 	retryTimeout: 10000,
 	defaultDeck: "Default",
+	apiKey: undefined,
 };
 
 /**
@@ -68,7 +70,33 @@ export class AnkiClient {
 	 */
 	constructor(config: Partial<AnkiConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
-		this.client = new YankiConnect();
+
+		// Parse the URL to extract host and port
+		let host = "127.0.0.1";
+		let port = 8765;
+
+		try {
+			const url = new URL(this.config.ankiConnectUrl);
+			host = url.hostname;
+			port = parseInt(url.port) || 8765;
+		} catch {
+			// Fallback: try to parse host:port format
+			const urlStr = this.config.ankiConnectUrl.replace(/^https?:\/\//, "");
+			const parts = urlStr.split(":");
+			if (parts.length >= 1) {
+				host = parts[0] || "127.0.0.1";
+			}
+			if (parts.length >= 2) {
+				port = parseInt(parts[1]) || 8765;
+			}
+		}
+
+		this.client = new YankiConnect({
+			host: `http://${host}`,
+			port,
+			version: this.config.apiVersion as 6,
+			key: this.config.apiKey,
+		});
 	}
 
 	/**

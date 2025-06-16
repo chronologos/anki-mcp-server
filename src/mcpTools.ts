@@ -2,7 +2,7 @@
  * MCP Tool handlers for Anki
  */
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
-import { AnkiClient } from "./utils.js";
+import { AnkiClient, type AnkiConfig } from "./utils.js";
 
 /**
  * Handles all MCP tool operations for Anki
@@ -10,8 +10,8 @@ import { AnkiClient } from "./utils.js";
 export class McpToolHandler {
 	private ankiClient: AnkiClient;
 
-	constructor() {
-		this.ankiClient = new AnkiClient();
+	constructor(config?: Partial<AnkiConfig>) {
+		this.ankiClient = new AnkiClient(config);
 	}
 
 	/**

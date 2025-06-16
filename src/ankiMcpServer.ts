@@ -29,7 +29,7 @@ export class AnkiMcpServer {
 	/**
 	 * Constructor
 	 */
-	constructor() {
+	constructor(options: { ankiConnectKey?: string } = {}) {
 		this.server = new Server(
 			{
 				name: "anki-connect-server",
@@ -43,9 +43,10 @@ export class AnkiMcpServer {
 			},
 		);
 
-		this.ankiClient = new AnkiClient();
-		this.resourceHandler = new McpResourceHandler();
-		this.toolHandler = new McpToolHandler();
+		const ankiConfig = { apiKey: options.ankiConnectKey };
+		this.ankiClient = new AnkiClient(ankiConfig);
+		this.resourceHandler = new McpResourceHandler(ankiConfig);
+		this.toolHandler = new McpToolHandler(ankiConfig);
 
 		this.setupHandlers();
 
@@ -82,9 +83,8 @@ export class AnkiMcpServer {
 			},
 		);
 
-		// Tool handlers
+		// Tool handlers - don't check connection for listing tools
 		this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-			await this.checkConnection();
 			return this.toolHandler.getToolSchema();
 		});
 

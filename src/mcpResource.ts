@@ -2,7 +2,7 @@
  * MCP Resource handlers for Anki
  */
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
-import { AnkiClient } from "./utils.js";
+import { AnkiClient, type AnkiConfig } from "./utils.js";
 
 /**
  * Handles all MCP resource operations for Anki
@@ -14,8 +14,8 @@ export class McpResourceHandler {
 	private cacheExpiry: number;
 	private lastCacheUpdate: number;
 
-	constructor() {
-		this.ankiClient = new AnkiClient();
+	constructor(config?: Partial<AnkiConfig>) {
+		this.ankiClient = new AnkiClient(config);
 		this.modelSchemaCache = new Map();
 		this.allModelSchemasCache = null;
 		this.cacheExpiry = 5 * 60 * 1000; // 5 minutes

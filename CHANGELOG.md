@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Robust version validation supporting multiple tag formats
 - npm package configuration
 - Installation instructions for npm package
+- **API key support for AnkiConnect** - Added `--anki-connect-key` command line argument to support secured AnkiConnect configurations
 
 ## [0.1.0] - 2025-03-20
 

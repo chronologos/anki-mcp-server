@@ -32,10 +32,19 @@ A Model Context Protocol (MCP) server that enables LLMs to interact with Anki fl
 
 ## Configuration
 
+### Using API Key for AnkiConnect
+
+If your AnkiConnect plugin is configured with an API key for security, you can provide it using the `--anki-connect-key` argument:
+
+```bash
+npx anki-mcp-server --anki-connect-key "your-api-key-here"
+```
+
 ### Usage with Claude Desktop
 
 Add the server to your claude_desktop_config.json:
 
+**Without API key:**
 ```json
 {
   "mcpServers": {
@@ -47,16 +56,62 @@ Add the server to your claude_desktop_config.json:
 }
 ```
 
+**With API key:**
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "npx",
+      "args": ["--yes","anki-mcp-server", "--anki-connect-key", "your-api-key-here"]
+    }
+  }
+}
+```
+
+#### Using Local Development Build
+
+If you're developing or testing local changes, use the absolute path to your built version:
+
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "node",
+      "args": ["/absolute/path/to/anki-mcp-server/dist/index.js", "--anki-connect-key", "your-api-key-here"]
+    }
+  }
+}
+```
+
+**Important:** When using local builds:
+1. Make your changes to the source code
+2. Run `npm run build` to compile
+3. Restart Claude Desktop to pick up changes
+4. The local build will use your latest changes instead of the published npm package
+
 ### Configuration for Cline
 
 Add the server to your Cline MCP settings file inside VSCode's settings `cline_mcp_settings.json` 
 
+**Without API key:**
 ```json
 {
   "mcpServers": {
     "anki": {
       "command": "npx",
       "args": ["--yes","anki-mcp-server"]
+    }
+  }
+}
+```
+
+**With API key:**
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "npx",
+      "args": ["--yes","anki-mcp-server", "--anki-connect-key", "your-api-key-here"]
     }
   }
 }
