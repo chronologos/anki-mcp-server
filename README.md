@@ -121,7 +121,7 @@ Add the server to your Cline MCP settings file inside VSCode's settings `cline_m
 
 ### Setup
 
-1. Install dependencies:
+1. Install dependencies:  
 ```bash
 npm install
 ```
