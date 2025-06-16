@@ -433,4 +433,45 @@ export class AnkiClient {
       throw this.wrapError(error instanceof Error ? error : new Error(String(error)));
     }
   }
+
+  /**
+   * Get selected notes from the Anki GUI
+   */
+  async guiSelectedNotes(): Promise<number[]> {
+    try {
+      const result = await this.executeWithRetry(() =>
+        // @ts-ignore - yanki-connect type definitions are incomplete
+        this.client.invoke("guiSelectedNotes")
+      );
+      return Array.isArray(result) ? result : [];
+    } catch (error) {
+      throw this.wrapError(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  /**
+   * Get current card from the Anki GUI
+   */
+  async guiCurrentCard(): Promise<{
+    answer: string;
+    question: string;
+    deckName: string;
+    modelName: string;
+    fieldOrder: number;
+    fields: Record<string, { value: string; order: number }>;
+    template: string;
+    cardId: number;
+    buttons: number[];
+    nextReviews: string[];
+  } | null> {
+    try {
+      const result = await this.executeWithRetry(() =>
+        // @ts-ignore - yanki-connect type definitions are incomplete
+        this.client.invoke("guiCurrentCard")
+      );
+      return result || null;
+    } catch (error) {
+      throw this.wrapError(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
 }

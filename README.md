@@ -18,6 +18,8 @@ A Model Context Protocol (MCP) server that enables LLMs to interact with Anki fl
 - `list_note_types` - List all available note types
 - `create_note_type` - Create a new note type
 - `get_note_type_info` - Get detailed structure of a note type
+- `gui_selected_notes` - Get selected notes from the Anki GUI browser
+- `gui_current_card` - Get the current card being shown in Anki GUI
 
 ### Resources
 - `anki://decks/all` - Complete list of available decks
@@ -182,6 +184,16 @@ Back: A closure is the combination of a function and the lexical environment wit
 ```
 Create a cloze card in the "Programming" deck with:
 Text: In JavaScript, {{c1::const}} declares a block-scoped variable that cannot be {{c2::reassigned}}.
+```
+
+4. Get selected notes from Anki GUI:
+```
+Show me the notes that are currently selected in the Anki browser
+```
+
+5. Get current card being studied:
+```
+What card is currently being shown in Anki?
 ```
 
 ## Contributing

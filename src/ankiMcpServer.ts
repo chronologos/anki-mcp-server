@@ -43,7 +43,7 @@ export class AnkiMcpServer {
       }
     );
 
-    const ankiConfig = { apiKey: options.ankiConnectKey };
+    const ankiConfig = options.ankiConnectKey ? { apiKey: options.ankiConnectKey } : {};
     this.ankiClient = new AnkiClient(ankiConfig);
     this.resourceHandler = new McpResourceHandler(ankiConfig);
     this.toolHandler = new McpToolHandler(ankiConfig);
