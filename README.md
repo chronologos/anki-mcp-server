@@ -196,6 +196,44 @@ Show me the notes that are currently selected in the Anki browser
 What card is currently being shown in Anki?
 ```
 
+## Troubleshooting
+
+### GUI Functions Not Working (`guiSelectedNotes`, `guiCurrentCard`)
+
+**Symptoms:** 
+- Direct API calls with curl work fine
+- MCP Inspector and Claude return empty results for `gui_selected_notes`
+- Getting different behavior between direct API calls and the MCP server
+
+**Root Cause:**
+The issue was using `client.invoke("guiSelectedNotes")` instead of the proper yanki-connect namespace methods.
+
+**Solution:**
+Use the typed namespace methods:
+- `client.graphical.guiSelectedNotes()` instead of `client.invoke("guiSelectedNotes")`
+- `client.graphical.guiCurrentCard()` instead of `client.invoke("guiCurrentCard")`
+- `client.miscellaneous.version()` instead of `client.invoke("version")`
+
+The yanki-connect library organizes its methods into typed namespaces (`client.graphical.*`, `client.miscellaneous.*`, etc.) which provide better error handling and response processing than the raw `invoke()` method.
+
+### Common AnkiConnect Issues
+
+1. **Connection Refused**
+   - Ensure Anki is running
+   - Verify AnkiConnect add-on is installed and enabled
+   - Check if port 8765 is accessible
+
+2. **API Key Required**
+   - If you configured AnkiConnect with an API key, use the `--anki-connect-key` argument
+
+3. **Collection Unavailable**
+   - Close any open dialogs in Anki
+   - Ensure no other applications are accessing the Anki database
+
+4. **GUI Functions Require Browser Open**
+   - `gui_selected_notes` requires the Anki Card Browser to be open
+   - `gui_current_card` requires a card to be currently displayed in review mode
+
 ## Contributing
 
 1. Fork the repository

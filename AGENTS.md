@@ -186,6 +186,38 @@ const note = {
    - Minimize API calls
    - Check for connection issues
 
+### GUI Function Issues (Critical)
+
+**Issue:** GUI functions like `guiSelectedNotes` and `guiCurrentCard` return empty results even when direct API calls work.
+
+**Root Cause:** Using `client.invoke()` instead of proper yanki-connect namespace methods.
+
+**Solution:** Always use the typed namespace methods in `utils.ts`:
+- ✅ `client.graphical.guiSelectedNotes()` 
+- ❌ `client.invoke("guiSelectedNotes")`
+- ✅ `client.graphical.guiCurrentCard()`
+- ❌ `client.invoke("guiCurrentCard")`
+- ✅ `client.miscellaneous.version()`
+- ❌ `client.invoke("version")`
+
+**Why:** The yanki-connect library organizes methods into typed namespaces that provide proper error handling and response processing. The raw `invoke()` method doesn't process GUI responses correctly.
+
+### Development Guidelines for yanki-connect
+
+When adding new AnkiConnect functionality to `utils.ts`:
+
+1. **Check the namespace:** Look at the [yanki-connect documentation](https://github.com/kitschpatrol/yanki-connect) to find the correct namespace:
+   - `client.card.*` for card operations
+   - `client.deck.*` for deck operations  
+   - `client.graphical.*` for GUI operations
+   - `client.miscellaneous.*` for utility functions
+   - `client.model.*` for note type operations
+   - `client.note.*` for note operations
+
+2. **Use typed methods first:** Always try the namespace method before falling back to `invoke()`
+
+3. **Test with MCP Inspector:** If direct API calls work but MCP doesn't, check namespace usage
+
 ## Resources
 
 - [AnkiConnect API](https://foosoft.net/projects/anki-connect/)

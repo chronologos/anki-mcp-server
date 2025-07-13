@@ -184,11 +184,7 @@ export class AnkiClient {
    */
   async checkConnection(): Promise<boolean> {
     try {
-      // Use a direct axios call to check connection since version() is private
-      await this.executeWithRetry(() =>
-        // @ts-ignore - yanki-connect type definitions are incomplete
-        this.client.invoke("version")
-      );
+      await this.executeWithRetry(() => this.client.miscellaneous.version());
       return true;
     } catch (error) {
       throw this.wrapError(error instanceof Error ? error : new Error(String(error)));
@@ -439,10 +435,7 @@ export class AnkiClient {
    */
   async guiSelectedNotes(): Promise<number[]> {
     try {
-      const result = await this.executeWithRetry(() =>
-        // @ts-ignore - yanki-connect type definitions are incomplete
-        this.client.invoke("guiSelectedNotes")
-      );
+      const result = await this.executeWithRetry(() => this.client.graphical.guiSelectedNotes());
       return Array.isArray(result) ? result : [];
     } catch (error) {
       throw this.wrapError(error instanceof Error ? error : new Error(String(error)));
@@ -465,10 +458,7 @@ export class AnkiClient {
     nextReviews: string[];
   } | null> {
     try {
-      const result = await this.executeWithRetry(() =>
-        // @ts-ignore - yanki-connect type definitions are incomplete
-        this.client.invoke("guiCurrentCard")
-      );
+      const result = await this.executeWithRetry(() => this.client.graphical.guiCurrentCard());
       return result || null;
     } catch (error) {
       throw this.wrapError(error instanceof Error ? error : new Error(String(error)));
