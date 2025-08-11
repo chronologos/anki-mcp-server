@@ -213,6 +213,27 @@ export class McpToolHandler {
           },
         },
         {
+          name: "batch_delete_notes",
+          description: "Delete multiple notes at once",
+          inputSchema: {
+            type: "object",
+            properties: {
+              noteIds: {
+                type: "array",
+                items: {
+                  type: "number",
+                },
+                description: "Array of note IDs to delete",
+              },
+              stopOnError: {
+                type: "boolean",
+                description: "Whether to stop on first error (default: false)",
+              },
+            },
+            required: ["noteIds"],
+          },
+        },
+        {
           name: "list_note_types",
           description: "List all available note types",
           inputSchema: {
@@ -331,6 +352,8 @@ export class McpToolHandler {
           return this.updateNote(args);
         case "delete_note":
           return this.deleteNote(args);
+        case "batch_delete_notes":
+          return this.batchDeleteNotes(args);
 
         // GUI tools
         case "gui_selected_notes":
@@ -927,6 +950,100 @@ export class McpToolHandler {
             {
               success: true,
               noteId: args.noteId,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  }
+
+  /**
+   * Delete multiple notes at once
+   */
+  private async batchDeleteNotes(args: {
+    noteIds: number[];
+    stopOnError?: boolean;
+  }): Promise<{
+    content: {
+      type: string;
+      text: string;
+    }[];
+  }> {
+    if (!args.noteIds || !Array.isArray(args.noteIds) || args.noteIds.length === 0) {
+      throw new McpError(ErrorCode.InvalidParams, "Note IDs array is required and cannot be empty");
+    }
+
+    const stopOnError = args.stopOnError === true;
+    const results: {
+      success: boolean;
+      noteId: number;
+      error?: string;
+    }[] = [];
+
+    if (stopOnError) {
+      // Delete one by one if stopOnError is true
+      for (const noteId of args.noteIds) {
+        try {
+          await this.ankiClient.deleteNotes([noteId]);
+          results.push({
+            success: true,
+            noteId,
+          });
+        } catch (error) {
+          results.push({
+            success: false,
+            noteId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          break; // Stop on first error
+        }
+      }
+    } else {
+      // Try to delete all at once for better performance
+      try {
+        await this.ankiClient.deleteNotes(args.noteIds);
+        // If successful, mark all as deleted
+        for (const noteId of args.noteIds) {
+          results.push({
+            success: true,
+            noteId,
+          });
+        }
+      } catch (error) {
+        // If batch delete fails, try individual deletes to identify which ones fail
+        for (const noteId of args.noteIds) {
+          try {
+            await this.ankiClient.deleteNotes([noteId]);
+            results.push({
+              success: true,
+              noteId,
+            });
+          } catch (individualError) {
+            results.push({
+              success: false,
+              noteId,
+              error:
+                individualError instanceof Error
+                  ? individualError.message
+                  : String(individualError),
+            });
+          }
+        }
+      }
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              results,
+              total: args.noteIds.length,
+              successful: results.filter((r) => r.success).length,
+              failed: results.filter((r) => !r.success).length,
             },
             null,
             2

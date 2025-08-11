@@ -32,41 +32,41 @@ To improve performance and reduce redundant API calls, the `McpResourceHandler` 
 
 ### Available Tools
 
--   **`list_decks`**: Lists all available Anki decks.
--   **`create_deck`**: Creates a new Anki deck.
-    -   `name`: `string`
--   **`create_note`**: Creates a new note. **Hint**: Call `get_note_type_info` first.
-    -   `type`: `string`
-    -   `deck`: `string`
-    -   `fields`: `object`
-    -   `tags?`: `string[]`
--   **`batch_create_notes`**: Creates multiple notes in a single call.
-    -   `notes`: `object[]` (array of note objects)
--   **`search_notes`**: Searches for notes using Anki's query syntax.
-    -   `query`: `string`
--   **`get_note_info`**: Retrieves detailed information for a specific note ID.
-    -   `noteId`: `number`
--   **`update_note`**: Updates the fields or tags of an existing note.
-    -   `id`: `number`
-    -   `fields?`: `object`
-    -   `tags?`: `string[]`
--   **`delete_note`**: Deletes a note by its ID.
-    -   `noteId`: `number`
--   **`list_note_types`**: Lists all available note type names.
--   **`get_note_type_info`**: Gets the detailed structure (fields, templates) of a note type.
-    -   `modelName`: `string`
--   **`create_note_type`**: Creates a new note type.
-    -   `name`: `string`
-    -   `fields`: `string[]`
-    -   `templates`: `object[]`
-    -   `css?`: `string`
+- **`list_decks`**: Lists all available Anki decks.
+- **`create_deck`**: Creates a new Anki deck.
+  - `name`: `string`
+- **`create_note`**: Creates a new note. **Hint**: Call `get_note_type_info` first.
+  - `type`: `string`
+  - `deck`: `string`
+  - `fields`: `object`
+  - `tags?`: `string[]`
+- **`batch_create_notes`**: Creates multiple notes in a single call.
+  - `notes`: `object[]` (array of note objects)
+- **`search_notes`**: Searches for notes using Anki's query syntax.
+  - `query`: `string`
+- **`get_note_info`**: Retrieves detailed information for a specific note ID.
+  - `noteId`: `number`
+- **`update_note`**: Updates the fields or tags of an existing note.
+  - `id`: `number`
+  - `fields?`: `object`
+  - `tags?`: `string[]`
+- **`delete_note`**: Deletes a note by its ID.
+  - `noteId`: `number`
+- **`list_note_types`**: Lists all available note type names.
+- **`get_note_type_info`**: Gets the detailed structure (fields, templates) of a note type.
+  - `modelName`: `string`
+- **`create_note_type`**: Creates a new note type.
+  - `name`: `string`
+  - `fields`: `string[]`
+  - `templates`: `object[]`
+  - `css?`: `string`
 
 ### Available Resources
 
--   **`anki://decks/all`**: Retrieves a JSON object containing a list of all deck names.
--   **`anki://note-types/all`**: Retrieves a JSON object with a list of all note type names.
--   **`anki://note-types/all-with-schemas`**: Retrieves detailed structures for all note types.
--   **`anki://note-types/{modelName}`**: (Template) Retrieves the detailed structure for a specific note type.
+- **`anki://decks/all`**: Retrieves a JSON object containing a list of all deck names.
+- **`anki://note-types/all`**: Retrieves a JSON object with a list of all note type names.
+- **`anki://note-types/all-with-schemas`**: Retrieves detailed structures for all note types.
+- **`anki://note-types/{modelName}`**: (Template) Retrieves the detailed structure for a specific note type.
 
 ---
 
@@ -76,7 +76,8 @@ To improve performance and reduce redundant API calls, the `McpResourceHandler` 
 
 1.  **Define the tool schema and handler** in `mcpTools.ts`. Follow the existing pattern within the `McpToolHandler` class. Make the tool name descriptive and snake_cased.
 
-    *Example: Adding a tool to add tags to an existing note.*
+    _Example: Adding a tool to add tags to an existing note._
+
     ```typescript
     // In getToolSchema()
     {
@@ -95,7 +96,7 @@ To improve performance and reduce redundant API calls, the `McpResourceHandler` 
     // In executeTool(), add a case for it
     case "add_tags_to_note":
         return this.addTagsToNote(args);
-    
+
     // Implement the private handler method
     private async addTagsToNote(args: { noteId: number; tags: string[] }): Promise</*...*/> {
         if (!args.tags || args.tags.length === 0) {
@@ -112,9 +113,9 @@ To improve performance and reduce redundant API calls, the `McpResourceHandler` 
 
 ### Error Handling
 
--   Use the `McpError` class for all thrown errors.
--   Choose an appropriate `ErrorCode` from the MCP SDK.
--   Provide clear, user-facing error messages. Check for invalid parameters early.
+- Use the `McpError` class for all thrown errors.
+- Choose an appropriate `ErrorCode` from the MCP SDK.
+- Provide clear, user-facing error messages. Check for invalid parameters early.
 
 ## Common Patterns
 
@@ -131,9 +132,9 @@ const note = {
   deck: "Programming",
   fields: {
     Front: "What is a closure in JavaScript?",
-    Back: "A closure is the combination of a function and the lexical environment within which that function was declared."
+    Back: "A closure is the combination of a function and the lexical environment within which that function was declared.",
   },
-  tags: ["javascript", "programming-concepts"]
+  tags: ["javascript", "programming-concepts"],
 };
 
 // Agent calls: create_note(note)
@@ -162,21 +163,23 @@ const note = {
 
 ### Potential Enhancements
 
--   **Media Support**: Tools for adding audio, images, or video to notes. This would require handling file data.
--   **Card-level Operations**: Tools to suspend, unsuspend, or reposition individual cards, not just notes.
--   **Advanced Search**: A structured query tool that abstracts away some of Anki's complex search syntax.
--   **Profile Management**: Tools for listing or switching Anki profiles.
+- **Media Support**: Tools for adding audio, images, or video to notes. This would require handling file data.
+- **Card-level Operations**: Tools to suspend, unsuspend, or reposition individual cards, not just notes.
+- **Advanced Search**: A structured query tool that abstracts away some of Anki's complex search syntax.
+- **Profile Management**: Tools for listing or switching Anki profiles.
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **AnkiConnect Connection**
+
    - Verify Anki is running
    - Check AnkiConnect installation
    - Validate port configuration
 
 2. **Note Creation**
+
    - Verify deck exists
    - Check note type configuration
    - Validate field names
@@ -193,7 +196,8 @@ const note = {
 **Root Cause:** Using `client.invoke()` instead of proper yanki-connect namespace methods.
 
 **Solution:** Always use the typed namespace methods in `utils.ts`:
-- ✅ `client.graphical.guiSelectedNotes()` 
+
+- ✅ `client.graphical.guiSelectedNotes()`
 - ❌ `client.invoke("guiSelectedNotes")`
 - ✅ `client.graphical.guiCurrentCard()`
 - ❌ `client.invoke("guiCurrentCard")`
@@ -207,8 +211,9 @@ const note = {
 When adding new AnkiConnect functionality to `utils.ts`:
 
 1. **Check the namespace:** Look at the [yanki-connect documentation](https://github.com/kitschpatrol/yanki-connect) to find the correct namespace:
+
    - `client.card.*` for card operations
-   - `client.deck.*` for deck operations  
+   - `client.deck.*` for deck operations
    - `client.graphical.*` for GUI operations
    - `client.miscellaneous.*` for utility functions
    - `client.model.*` for note type operations
@@ -222,4 +227,4 @@ When adding new AnkiConnect functionality to `utils.ts`:
 
 - [AnkiConnect API](https://foosoft.net/projects/anki-connect/)
 - [MCP Documentation](https://github.com/modelcontextprotocol)
-- [TypeScript Documentation](https://www.typescriptlang.org/) 
+- [TypeScript Documentation](https://www.typescriptlang.org/)

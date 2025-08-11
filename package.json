@@ -1,6 +1,6 @@
 {
   "name": "@iantay/anki-mcp-server",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "A Model Context Protocol (MCP) server that enables LLMs to interact with Anki flashcard software through AnkiConnect (Fork with API key support)",
   "type": "module",
   "bin": {
