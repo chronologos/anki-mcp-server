@@ -3,6 +3,7 @@
  */
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { AnkiClient, type AnkiConfig } from "./utils.js";
+import { getFlashcardInstructions } from "./flashcardInstructions.js";
 
 /**
  * Handles all MCP tool operations for Anki
@@ -304,6 +305,16 @@ export class McpToolHandler {
             required: [],
           },
         },
+        {
+          name: "get_flashcard_instructions",
+          description:
+            "Get comprehensive instructions for creating high-quality Anki flashcards using cloze deletion and cognitive science principles",
+          inputSchema: {
+            type: "object",
+            properties: {},
+            required: [],
+          },
+        },
       ],
     };
   }
@@ -321,7 +332,10 @@ export class McpToolHandler {
     }[];
     isError?: boolean;
   }> {
-    await this.ankiClient.checkConnection();
+    // Skip connection check for tools that don't need Anki
+    if (name !== "get_flashcard_instructions") {
+      await this.ankiClient.checkConnection();
+    }
 
     try {
       switch (name) {
@@ -360,6 +374,10 @@ export class McpToolHandler {
           return this.guiSelectedNotes();
         case "gui_current_card":
           return this.guiCurrentCard();
+
+        // Instructions tool
+        case "get_flashcard_instructions":
+          return this.getFlashcardInstructions();
 
         // Dynamic model-specific note creation
         default:
@@ -1123,6 +1141,27 @@ export class McpToolHandler {
         {
           type: "text",
           text: JSON.stringify(currentCard, null, 2),
+        },
+      ],
+    };
+  }
+
+  /**
+   * Get flashcard creation instructions
+   */
+  private async getFlashcardInstructions(): Promise<{
+    content: {
+      type: string;
+      text: string;
+    }[];
+  }> {
+    const instructions = getFlashcardInstructions();
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: instructions,
         },
       ],
     };

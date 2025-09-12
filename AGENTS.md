@@ -26,6 +26,30 @@ All interactions with the AnkiConnect API are routed through the `AnkiClient` cl
 
 To improve performance and reduce redundant API calls, the `McpResourceHandler` implements a simple in-memory cache for note type schemas. The cache has a 5-minute expiry. When developing new resource handlers, consider if a similar caching strategy is appropriate.
 
+### Flashcard Instructions (`flashcardInstructions.ts`)
+
+The `get_flashcard_instructions` tool provides comprehensive guidance for creating high-quality flashcards. The instructions can be customized with the following priority order:
+
+1. **CLI Flag** (highest priority): `--flashcard-instructions-path <path>`
+2. **Environment Variable**: `ANKI_FLASHCARD_INSTRUCTIONS_PATH`
+3. **Default Instructions** (fallback): Hard-coded comprehensive instructions
+
+- **Format**: The instructions file should be plain text and can include markdown formatting
+- **Error Handling**: If the specified file cannot be read, falls back to default instructions with a warning
+
+Example usage:
+```bash
+# Using CLI flag (highest priority)
+npm start -- --flashcard-instructions-path "/path/to/custom-instructions.md"
+
+# Using environment variable
+export ANKI_FLASHCARD_INSTRUCTIONS_PATH="/path/to/custom-instructions.md"
+npm start
+
+# Using relative paths
+npm start -- --flashcard-instructions-path "./my-instructions.txt"
+```
+
 ---
 
 ## Quick Reference
@@ -60,6 +84,7 @@ To improve performance and reduce redundant API calls, the `McpResourceHandler` 
   - `fields`: `string[]`
   - `templates`: `object[]`
   - `css?`: `string`
+- **`get_flashcard_instructions`**: Get comprehensive instructions for creating high-quality Anki flashcards using cloze deletion and cognitive science principles.
 
 ### Available Resources
 
@@ -155,9 +180,10 @@ const note = {
 
 1.  **Leverage Existing Tools**: Before adding a new tool, check if the desired functionality can be achieved by composing existing tools.
 2.  **Use `get_note_type_info`**: Always encourage the agent to call `get_note_type_info` before using `create_note` to ensure the correct field names are used. This is a major source of potential errors.
-3.  **Idempotency**: Where possible, design tools to be idempotent. For example, `create_deck` doesn't fail if the deck already exists.
-4.  **Batching**: For creating multiple notes, `batch_create_notes` is significantly more performant than calling `create_note` in a loop.
-5.  **Clarity over Conciseness**: In descriptions and schemas, be explicit to reduce ambiguity for the agent.
+3.  **Use `get_flashcard_instructions`**: When creating flashcards, agents should call `get_flashcard_instructions` first to get comprehensive guidance on creating high-quality cards with proper cloze deletion syntax and cognitive science principles.
+4.  **Idempotency**: Where possible, design tools to be idempotent. For example, `create_deck` doesn't fail if the deck already exists.
+5.  **Batching**: For creating multiple notes, `batch_create_notes` is significantly more performant than calling `create_note` in a loop.
+6.  **Clarity over Conciseness**: In descriptions and schemas, be explicit to reduce ambiguity for the agent.
 
 ## Future Development
 

@@ -7,9 +7,10 @@ import { AnkiMcpServer } from "./ankiMcpServer.js";
 /**
  * Parse command line arguments
  */
-function parseArgs(): { ankiConnectKey?: string } {
+function parseArgs(): { ankiConnectKey?: string; flashcardInstructionsPath?: string } {
   const args = process.argv.slice(2);
   let ankiConnectKey: string | undefined;
+  let flashcardInstructionsPath: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--anki-connect-key" && i + 1 < args.length) {
@@ -24,6 +25,18 @@ function parseArgs(): { ankiConnectKey?: string } {
         ankiConnectKey = ankiConnectKey.slice(1, -1).trim();
       }
       i++; // Skip the next argument since it's the value
+    } else if (args[i] === "--flashcard-instructions-path" && i + 1 < args.length) {
+      flashcardInstructionsPath = args[i + 1];
+      // Clean and trim the path
+      flashcardInstructionsPath = flashcardInstructionsPath.trim();
+      // Remove surrounding quotes if present
+      if (flashcardInstructionsPath.startsWith('"') && flashcardInstructionsPath.endsWith('"')) {
+        flashcardInstructionsPath = flashcardInstructionsPath.slice(1, -1).trim();
+      }
+      if (flashcardInstructionsPath.startsWith("'") && flashcardInstructionsPath.endsWith("'")) {
+        flashcardInstructionsPath = flashcardInstructionsPath.slice(1, -1).trim();
+      }
+      i++; // Skip the next argument since it's the value
     }
   }
 
@@ -31,8 +44,11 @@ function parseArgs(): { ankiConnectKey?: string } {
   if (ankiConnectKey) {
     console.error(`[DEBUG] API key configured`);
   }
+  if (flashcardInstructionsPath) {
+    console.error(`[DEBUG] Flashcard instructions path: ${flashcardInstructionsPath}`);
+  }
 
-  return { ankiConnectKey };
+  return { ankiConnectKey, flashcardInstructionsPath };
 }
 
 /**
@@ -40,7 +56,13 @@ function parseArgs(): { ankiConnectKey?: string } {
  */
 async function main() {
   try {
-    const { ankiConnectKey } = parseArgs();
+    const { ankiConnectKey, flashcardInstructionsPath } = parseArgs();
+
+    // Set CLI argument as highest priority by setting it as an environment variable
+    if (flashcardInstructionsPath) {
+      process.env.ANKI_FLASHCARD_INSTRUCTIONS_PATH_CLI = flashcardInstructionsPath;
+    }
+
     const server = new AnkiMcpServer({ ankiConnectKey });
     await server.run();
   } catch (error) {

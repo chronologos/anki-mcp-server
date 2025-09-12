@@ -83,7 +83,10 @@ export class AnkiMcpServer {
     });
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      await this.checkConnection();
+      // Skip connection check for tools that don't need Anki
+      if (request.params.name !== "get_flashcard_instructions") {
+        await this.checkConnection();
+      }
       return this.toolHandler.executeTool(request.params.name, request.params.arguments);
     });
   }
