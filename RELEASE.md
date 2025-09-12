@@ -48,6 +48,7 @@ Once the PR is merged:
 The GitHub Actions workflow will automatically:
 
 1. Run the "Release Test" workflow first:
+
    - Build the package
    - Run tests on multiple Node.js versions
    - Validate the version matches the GitHub release tag
