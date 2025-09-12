@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Flashcard Instructions Tool** - New `get_flashcard_instructions` tool that provides comprehensive guidance for creating high-quality flashcards using cloze deletion and cognitive science principles
+- **CLI Flag Support** - Added `--flashcard-instructions-path` command line argument to specify custom flashcard instructions file (highest priority)
+- **Environment Variable Support** - Support for `ANKI_FLASHCARD_INSTRUCTIONS_PATH` environment variable for custom instructions
+- **Graceful Fallback** - Automatic fallback to comprehensive default instructions if custom file cannot be read
+- **Offline Tool Support** - Flashcard instructions tool works without requiring Anki connection
 - GitHub Actions workflow for automated npm publishing
 - GitHub Actions workflow for testing on pull requests
 - Release test workflow to ensure quality before publishing

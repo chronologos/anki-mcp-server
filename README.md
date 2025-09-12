@@ -20,6 +20,7 @@ A Model Context Protocol (MCP) server that enables LLMs to interact with Anki fl
 - `get_note_type_info` - Get detailed structure of a note type
 - `gui_selected_notes` - Get selected notes from the Anki GUI browser
 - `gui_current_card` - Get the current card being shown in Anki GUI
+- `get_flashcard_instructions` - Get comprehensive instructions for creating high-quality flashcards using cloze deletion and cognitive science principles
 
 ### Resources
 - `anki://decks/all` - Complete list of available decks
@@ -41,6 +42,28 @@ If your AnkiConnect plugin is configured with an API key for security, you can p
 ```bash
 npx anki-mcp-server --anki-connect-key "your-api-key-here"
 ```
+
+### Custom Flashcard Instructions
+
+The `get_flashcard_instructions` tool provides comprehensive guidance for creating high-quality flashcards. You can customize these instructions using:
+
+**CLI Flag (highest priority):**
+```bash
+npx anki-mcp-server --flashcard-instructions-path "/path/to/custom-instructions.md"
+```
+
+**Environment Variable:**
+```bash
+export ANKI_FLASHCARD_INSTRUCTIONS_PATH="/path/to/custom-instructions.md"
+npx anki-mcp-server
+```
+
+**Priority Order:**
+1. CLI flag `--flashcard-instructions-path` (highest priority)
+2. Environment variable `ANKI_FLASHCARD_INSTRUCTIONS_PATH`
+3. Default comprehensive instructions (fallback)
+
+The instructions file should be plain text and can include markdown formatting. If the specified file cannot be read, the system gracefully falls back to comprehensive default instructions.
 
 ### Usage with Claude Desktop
 
@@ -65,6 +88,30 @@ Add the server to your claude_desktop_config.json:
     "anki": {
       "command": "npx",
       "args": ["--yes","anki-mcp-server", "--anki-connect-key", "your-api-key-here"]
+    }
+  }
+}
+```
+
+**With custom flashcard instructions:**
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "npx",
+      "args": ["--yes","anki-mcp-server", "--flashcard-instructions-path", "/path/to/custom-instructions.md"]
+    }
+  }
+}
+```
+
+**With both API key and custom instructions:**
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "npx",
+      "args": ["--yes","anki-mcp-server", "--anki-connect-key", "your-api-key-here", "--flashcard-instructions-path", "/path/to/custom-instructions.md"]
     }
   }
 }
@@ -114,6 +161,18 @@ Add the server to your Cline MCP settings file inside VSCode's settings `cline_m
     "anki": {
       "command": "npx",
       "args": ["--yes","anki-mcp-server", "--anki-connect-key", "your-api-key-here"]
+    }
+  }
+}
+```
+
+**With custom flashcard instructions:**
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "npx",
+      "args": ["--yes","anki-mcp-server", "--flashcard-instructions-path", "/path/to/custom-instructions.md"]
     }
   }
 }
@@ -194,6 +253,11 @@ Show me the notes that are currently selected in the Anki browser
 5. Get current card being studied:
 ```
 What card is currently being shown in Anki?
+```
+
+6. Get flashcard creation instructions:
+```
+Show me instructions for creating high-quality flashcards
 ```
 
 ## Troubleshooting
