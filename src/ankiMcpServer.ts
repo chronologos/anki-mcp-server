@@ -6,16 +6,16 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
 	CallToolRequestSchema,
 	ErrorCode,
-	ListResourcesRequestSchema,
 	ListResourceTemplatesRequestSchema,
+	ListResourcesRequestSchema,
 	ListToolsRequestSchema,
 	McpError,
 	ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { MCP_VERSION } from "./_version.js";
 import { McpResourceHandler } from "./mcpResource.js";
 import { McpToolHandler } from "./mcpTools.js";
 import { AnkiClient } from "./utils.js";
-import { MCP_VERSION } from "./_version.js";
 
 /**
  * AnkiMcpServer is the main server class that handles MCP protocol communication

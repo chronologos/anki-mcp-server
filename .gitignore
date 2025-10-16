@@ -7,3 +7,4 @@ test-language.js
 dist/
 *.mcpb
 *.tgz
+version.local.json

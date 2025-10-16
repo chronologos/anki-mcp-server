@@ -65,6 +65,8 @@ npm run check
 - **`src/mcpTools.ts`**: Implements all MCP tool handlers for Anki operations (create/update/delete notes, manage decks)
 - **`src/mcpResource.ts`**: Handles MCP resource endpoints with caching for note type schemas (5-minute TTL)
 - **`src/utils.ts`**: AnkiClient class - anti-corruption layer that wraps `yanki-connect` with retry logic, error normalization, and MCP error conversion
+- **`src/cardRenderer.ts`**: HTML rendering engine for card previews (Basic and Cloze cards) with shadcn/ui-inspired design
+- **`src/previewServer.ts`**: HTTP server that serves card previews on localhost and opens browser automatically
 
 ### MCP Architecture Pattern
 
@@ -85,6 +87,7 @@ The server implements the following tools:
 - `create_deck` - Create a new Anki deck
 - `create_note` - Create a new note (Basic or Cloze)
 - `batch_create_notes` - Create multiple notes at once (recommended: 10-20 notes per batch, max: 50)
+- `batch_preview_notes` - Preview notes in browser before creating them (same format as batch_create_notes)
 - `search_notes` - Search for notes using Anki query syntax (returns first 50 results)
 - `get_note_info` - Get detailed information about a note
 - `update_note` - Update an existing note
@@ -102,6 +105,37 @@ The server provides the following resources:
 - `anki://note-types/all` - List of all available note types
 - `anki://note-types/all-with-schemas` - Detailed structure information for all note types (cached)
 - `anki://note-types/{modelName}` - Detailed structure information for a specific note type (cached)
+
+### Card Preview System
+
+The preview system allows users to review cards in a browser before creating them in Anki:
+
+**Components:**
+- `cardRenderer.ts`: Renders notes to clean, minimal HTML with shadcn/ui-inspired design
+- `previewServer.ts`: HTTP server that auto-selects available port (starting from 3000) and opens browser
+
+**Features:**
+- Renders Basic cards (Front/Back) and Cloze cards (interactive deletions)
+- Dark mode support with localStorage persistence
+- Interactive cloze reveals (click individual or toggle all)
+- Keyboard shortcuts (Space = reveal all, H = hide all, D = dark mode)
+- Auto-closes server after 5 minutes of inactivity
+
+**Usage:**
+```javascript
+{
+  "notes": [
+    {
+      "type": "Basic",
+      "deck": "Programming",
+      "fields": { "Front": "Question", "Back": "Answer" },
+      "tags": ["javascript"],
+      "id": "optional-custom-id"  // Optional for tracking across sessions
+    }
+  ],
+  "port": 3000  // Optional, auto-selects if not specified
+}
+```
 
 ### Build Configuration
 

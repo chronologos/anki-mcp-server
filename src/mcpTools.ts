@@ -2,6 +2,9 @@
  * MCP Tool handlers for Anki
  */
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+import type { PreviewNote } from "./cardRenderer.js";
+import { renderNotesToHtml } from "./cardRenderer.js";
+import { previewInBrowser } from "./previewServer.js";
 import { AnkiClient } from "./utils.js";
 
 /**
@@ -323,6 +326,53 @@ export class McpToolHandler {
 						required: [],
 					},
 				},
+				{
+					name: "batch_preview_notes",
+					description:
+						"Preview notes in batch create format in a browser before creating them in Anki. Serves cards on localhost and opens browser automatically.",
+					inputSchema: {
+						type: "object",
+						properties: {
+							notes: {
+								type: "array",
+								items: {
+									type: "object",
+									properties: {
+										type: {
+											type: "string",
+											enum: ["Basic", "Cloze"],
+										},
+										deck: {
+											type: "string",
+										},
+										fields: {
+											type: "object",
+											additionalProperties: true,
+										},
+										tags: {
+											type: "array",
+											items: {
+												type: "string",
+											},
+										},
+										id: {
+											oneOf: [{ type: "string" }, { type: "number" }],
+											description: "Optional custom ID for tracking this card across sessions",
+										},
+									},
+									required: ["type", "deck", "fields"],
+								},
+								description:
+									"Array of notes in the same format as batch_create_notes, with optional id field",
+							},
+							port: {
+								type: "number",
+								description: "Optional port number (default: auto-select from 3000+)",
+							},
+						},
+						required: ["notes"],
+					},
+				},
 			],
 		};
 	}
@@ -377,6 +427,10 @@ export class McpToolHandler {
 					return this.guiSelectedNotes();
 				case "gui_current_card":
 					return this.guiCurrentCard();
+
+				// Preview tool
+				case "batch_preview_notes":
+					return this.batchPreviewNotes(args);
 
 				// Dynamic model-specific note creation
 				default: {
@@ -1062,6 +1116,64 @@ export class McpToolHandler {
 				{
 					type: "text",
 					text: JSON.stringify(currentCard, null, 2),
+				},
+			],
+		};
+	}
+
+	/**
+	 * Preview notes in browser before creating them in Anki
+	 */
+	private async batchPreviewNotes(args: {
+		notes: PreviewNote[];
+		port?: number;
+	}): Promise<{
+		content: {
+			type: string;
+			text: string;
+		}[];
+	}> {
+		if (!args.notes || !Array.isArray(args.notes) || args.notes.length === 0) {
+			throw new McpError(ErrorCode.InvalidParams, "Notes array is required");
+		}
+
+		// Validate notes
+		for (const note of args.notes) {
+			if (!note.type || !["Basic", "Cloze"].includes(note.type)) {
+				throw new McpError(
+					ErrorCode.InvalidParams,
+					"Each note must have a valid type (Basic or Cloze)"
+				);
+			}
+			if (!note.deck) {
+				throw new McpError(ErrorCode.InvalidParams, "Each note must have a deck");
+			}
+			if (!note.fields || Object.keys(note.fields).length === 0) {
+				throw new McpError(ErrorCode.InvalidParams, "Each note must have fields");
+			}
+		}
+
+		// Render notes to HTML
+		const html = renderNotesToHtml(args.notes);
+
+		// Start preview server
+		const result = await previewInBrowser(html, args.port);
+
+		return {
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify(
+						{
+							success: true,
+							url: result.url,
+							port: result.port,
+							message: result.message,
+							notesCount: args.notes.length,
+						},
+						null,
+						2
+					),
 				},
 			],
 		};
