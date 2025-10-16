@@ -1,6 +1,6 @@
 /**
  * Card Renderer for Anki note previews
- * Simplified version using shadcn/ui design principles
+ * With accept/reject/comment functionality for LLM feedback
  */
 
 /**
@@ -117,6 +117,18 @@ function renderBasicCard(note: PreviewNote, index: number, totalCards: number): 
         ${extraFields}
       </div>
       ${tags ? `<div class="card-footer"><span class="tags">${escapeHtml(tags)}</span></div>` : ""}
+      <div class="card-actions">
+        <button class="action-btn accept-btn" onclick="acceptCard(${index})">✓ Accept</button>
+        <button class="action-btn reject-btn" onclick="rejectCard(${index})">✗ Reject</button>
+        <button class="action-btn comment-btn" onclick="toggleComment(${index})">💬 Comment</button>
+      </div>
+      <div class="comment-section" id="comment-${index}" style="display: none;">
+        <textarea
+          class="comment-input"
+          placeholder="Add your feedback or reason for rejection..."
+          oninput="updateComment(${index}, this.value)"
+        ></textarea>
+      </div>
     </div>
   `;
 }
@@ -174,6 +186,18 @@ function renderClozeCard(note: PreviewNote, index: number, totalCards: number): 
         ${extraFields}
       </div>
       ${tags ? `<div class="card-footer"><span class="tags">${escapeHtml(tags)}</span></div>` : ""}
+      <div class="card-actions">
+        <button class="action-btn accept-btn" onclick="acceptCard(${index})">✓ Accept</button>
+        <button class="action-btn reject-btn" onclick="rejectCard(${index})">✗ Reject</button>
+        <button class="action-btn comment-btn" onclick="toggleComment(${index})">💬 Comment</button>
+      </div>
+      <div class="comment-section" id="comment-${index}" style="display: none;">
+        <textarea
+          class="comment-input"
+          placeholder="Add your feedback or reason for rejection..."
+          oninput="updateComment(${index}, this.value)"
+        ></textarea>
+      </div>
     </div>
   `;
 }
@@ -229,7 +253,8 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
       --muted: 240 4.8% 95.9%;
       --muted-foreground: 240 3.8% 46.1%;
       --border: 240 5.9% 90%;
-      --ring: 240 5.9% 10%;
+      --success: 142 76% 36%;
+      --destructive: 0 84% 60%;
       --radius: 0.5rem;
     }
 
@@ -243,7 +268,6 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
       --muted: 240 3.7% 15.9%;
       --muted-foreground: 240 5% 64.9%;
       --border: 240 3.7% 15.9%;
-      --ring: 240 4.9% 83.9%;
     }
 
     body {
@@ -252,7 +276,71 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
       color: hsl(var(--foreground));
       min-height: 100vh;
       padding: 2rem;
+      padding-top: 6rem;
       line-height: 1.5;
+    }
+
+    /* Decision Summary Bar */
+    .summary-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: hsl(var(--card));
+      border-bottom: 1px solid hsl(var(--border));
+      padding: 1rem;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .summary-content {
+      max-width: 56rem;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .summary-stats {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .stat-total { color: hsl(var(--foreground)); }
+    .stat-accepted { color: hsl(var(--success)); }
+    .stat-rejected { color: hsl(var(--destructive)); }
+    .stat-commented { color: hsl(217 91% 60%); }
+
+    .export-btn {
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: opacity 150ms;
+    }
+
+    .export-btn:hover {
+      opacity: 0.9;
+    }
+
+    .export-btn.success {
+      background: hsl(var(--success));
     }
 
     .container {
@@ -303,13 +391,15 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
       background: hsl(var(--muted));
     }
 
+    /* Card Styles */
     .card {
       background: hsl(var(--card));
-      border: 1px solid hsl(var(--border));
+      border: 2px solid hsl(var(--border));
       border-radius: var(--radius);
       margin-bottom: 1.5rem;
       overflow: hidden;
       transition: all 150ms;
+      position: relative;
     }
 
     .card:hover {
@@ -318,6 +408,24 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
 
     .dark-mode .card:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .card.accepted {
+      border-color: hsl(var(--success));
+      border-left-width: 4px;
+    }
+
+    .card.rejected {
+      border-color: hsl(var(--destructive));
+      border-left-width: 4px;
+    }
+
+    .card.commented::after {
+      content: '💬';
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 1.25rem;
     }
 
     .card-header {
@@ -392,6 +500,7 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
       margin: 1.25rem 0;
     }
 
+    /* Cloze Styles */
     .cloze-text {
       cursor: pointer;
       user-select: none;
@@ -449,9 +558,104 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
       color: hsl(var(--muted-foreground));
     }
 
+    /* Action Buttons */
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1rem;
+      border-top: 1px solid hsl(var(--border));
+      background: hsl(var(--muted) / 0.2);
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 2px solid hsl(var(--border));
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 150ms;
+      background: hsl(var(--card));
+      color: hsl(var(--foreground));
+    }
+
+    .accept-btn:hover {
+      border-color: hsl(var(--success));
+      color: hsl(var(--success));
+    }
+
+    .accept-btn.active {
+      background: hsl(var(--success));
+      border-color: hsl(var(--success));
+      color: white;
+    }
+
+    .reject-btn:hover {
+      border-color: hsl(var(--destructive));
+      color: hsl(var(--destructive));
+    }
+
+    .reject-btn.active {
+      background: hsl(var(--destructive));
+      border-color: hsl(var(--destructive));
+      color: white;
+    }
+
+    .comment-btn:hover {
+      border-color: hsl(217 91% 60%);
+      color: hsl(217 91% 60%);
+    }
+
+    .comment-btn.active {
+      background: hsl(217 91% 60%);
+      border-color: hsl(217 91% 60%);
+      color: white;
+    }
+
+    /* Comment Section */
+    .comment-section {
+      padding: 1rem;
+      background: hsl(var(--muted) / 0.3);
+      border-top: 1px solid hsl(var(--border));
+    }
+
+    .comment-input {
+      width: 100%;
+      min-height: 80px;
+      padding: 0.75rem;
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 0.875rem;
+      resize: vertical;
+      background: hsl(var(--card));
+      color: hsl(var(--foreground));
+      transition: border-color 150ms;
+    }
+
+    .comment-input:focus {
+      outline: none;
+      border-color: hsl(217 91% 60%);
+    }
+
     @media (max-width: 768px) {
       body {
         padding: 1rem;
+        padding-top: 8rem;
+      }
+
+      .summary-content {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .summary-stats {
+        justify-content: space-around;
+      }
+
+      .export-btn {
+        width: 100%;
       }
 
       .header h1 {
@@ -461,10 +665,41 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
       .card-body {
         padding: 1rem;
       }
+
+      .card-actions {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Decision Summary Bar -->
+  <div class="summary-bar">
+    <div class="summary-content">
+      <div class="summary-stats">
+        <div class="stat stat-total">
+          <span>Total:</span>
+          <strong id="stat-total">${notes.length}</strong>
+        </div>
+        <div class="stat stat-accepted">
+          <span>✓ Accepted:</span>
+          <strong id="stat-accepted">0</strong>
+        </div>
+        <div class="stat stat-rejected">
+          <span>✗ Rejected:</span>
+          <strong id="stat-rejected">0</strong>
+        </div>
+        <div class="stat stat-commented">
+          <span>💬 Comments:</span>
+          <strong id="stat-commented">0</strong>
+        </div>
+      </div>
+      <button class="export-btn" onclick="exportDecisions()" id="export-btn">
+        📋 Copy Decisions to Clipboard
+      </button>
+    </div>
+  </div>
+
   <div class="container">
     <div class="header">
       <h1>Anki Card Preview</h1>
@@ -475,6 +710,8 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
       <button class="btn" onclick="toggleDarkMode()">Toggle Dark Mode</button>
       <button class="btn" onclick="revealAllClozes()">Reveal All Clozes</button>
       <button class="btn" onclick="hideAllClozes()">Hide All Clozes</button>
+      <button class="btn" onclick="acceptAllCards()">✓ Accept All</button>
+      <button class="btn" onclick="clearAllDecisions()">🔄 Clear All</button>
     </div>
 
     <div id="cards">
@@ -485,6 +722,242 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
   <script>
     // Card metadata from server
     const cardMetadata = ${cardMetadata};
+
+    // Decision state
+    let decisions = [];
+
+    // Initialize decisions
+    function initDecisions() {
+      // Try to load from localStorage
+      const saved = localStorage.getItem('anki-preview-decisions');
+      if (saved) {
+        try {
+          decisions = JSON.parse(saved);
+        } catch (e) {
+          decisions = [];
+        }
+      }
+
+      // Ensure we have an entry for each card
+      if (decisions.length !== cardMetadata.length) {
+        decisions = cardMetadata.map((card, index) => ({
+          index: index,
+          id: card.id,
+          action: 'pending',
+          comment: ''
+        }));
+      }
+
+      // Restore UI state
+      restoreUIState();
+      updateSummary();
+    }
+
+    // Save decisions to localStorage
+    function saveDecisions() {
+      localStorage.setItem('anki-preview-decisions', JSON.stringify(decisions));
+    }
+
+    // Restore UI state from decisions
+    function restoreUIState() {
+      decisions.forEach((decision, index) => {
+        const card = document.querySelector(\`.card[data-index="\${index}"]\`);
+        if (!card) return;
+
+        // Update card appearance
+        card.classList.remove('accepted', 'rejected', 'commented');
+        if (decision.action === 'accept') {
+          card.classList.add('accepted');
+          card.querySelector('.accept-btn').classList.add('active');
+        } else if (decision.action === 'reject') {
+          card.classList.add('rejected');
+          card.querySelector('.reject-btn').classList.add('active');
+        }
+
+        // Restore comment
+        if (decision.comment) {
+          card.classList.add('commented');
+          const commentSection = card.querySelector(\`#comment-\${index}\`);
+          const commentInput = commentSection.querySelector('textarea');
+          commentInput.value = decision.comment;
+          commentSection.style.display = 'block';
+          card.querySelector('.comment-btn').classList.add('active');
+        }
+      });
+    }
+
+    // Accept card
+    function acceptCard(index) {
+      const decision = decisions[index];
+      const card = document.querySelector(\`.card[data-index="\${index}"]\`);
+      const acceptBtn = card.querySelector('.accept-btn');
+      const rejectBtn = card.querySelector('.reject-btn');
+
+      if (decision.action === 'accept') {
+        // Toggle off
+        decision.action = 'pending';
+        card.classList.remove('accepted');
+        acceptBtn.classList.remove('active');
+      } else {
+        // Accept
+        decision.action = 'accept';
+        card.classList.remove('rejected');
+        card.classList.add('accepted');
+        acceptBtn.classList.add('active');
+        rejectBtn.classList.remove('active');
+      }
+
+      saveDecisions();
+      updateSummary();
+    }
+
+    // Reject card
+    function rejectCard(index) {
+      const decision = decisions[index];
+      const card = document.querySelector(\`.card[data-index="\${index}"]\`);
+      const acceptBtn = card.querySelector('.accept-btn');
+      const rejectBtn = card.querySelector('.reject-btn');
+      const commentSection = card.querySelector(\`#comment-\${index}\`);
+
+      if (decision.action === 'reject') {
+        // Toggle off
+        decision.action = 'pending';
+        card.classList.remove('rejected');
+        rejectBtn.classList.remove('active');
+      } else {
+        // Reject
+        decision.action = 'reject';
+        card.classList.remove('accepted');
+        card.classList.add('rejected');
+        rejectBtn.classList.add('active');
+        acceptBtn.classList.remove('active');
+
+        // Auto-show comment section
+        commentSection.style.display = 'block';
+        card.querySelector('.comment-btn').classList.add('active');
+        commentSection.querySelector('textarea').focus();
+      }
+
+      saveDecisions();
+      updateSummary();
+    }
+
+    // Toggle comment section
+    function toggleComment(index) {
+      const card = document.querySelector(\`.card[data-index="\${index}"]\`);
+      const commentSection = card.querySelector(\`#comment-\${index}\`);
+      const commentBtn = card.querySelector('.comment-btn');
+
+      if (commentSection.style.display === 'none') {
+        commentSection.style.display = 'block';
+        commentBtn.classList.add('active');
+        commentSection.querySelector('textarea').focus();
+      } else {
+        commentSection.style.display = 'none';
+        commentBtn.classList.remove('active');
+      }
+    }
+
+    // Update comment
+    function updateComment(index, value) {
+      decisions[index].comment = value;
+      const card = document.querySelector(\`.card[data-index="\${index}"]\`);
+
+      if (value.trim()) {
+        card.classList.add('commented');
+      } else {
+        card.classList.remove('commented');
+      }
+
+      saveDecisions();
+      updateSummary();
+    }
+
+    // Update summary stats
+    function updateSummary() {
+      const accepted = decisions.filter(d => d.action === 'accept').length;
+      const rejected = decisions.filter(d => d.action === 'reject').length;
+      const commented = decisions.filter(d => d.comment.trim()).length;
+
+      document.getElementById('stat-accepted').textContent = accepted;
+      document.getElementById('stat-rejected').textContent = rejected;
+      document.getElementById('stat-commented').textContent = commented;
+    }
+
+    // Accept all cards
+    function acceptAllCards() {
+      decisions.forEach((decision, index) => {
+        decision.action = 'accept';
+        const card = document.querySelector(\`.card[data-index="\${index}"]\`);
+        card.classList.remove('rejected');
+        card.classList.add('accepted');
+        card.querySelector('.accept-btn').classList.add('active');
+        card.querySelector('.reject-btn').classList.remove('active');
+      });
+      saveDecisions();
+      updateSummary();
+    }
+
+    // Clear all decisions
+    function clearAllDecisions() {
+      if (!confirm('Clear all decisions? This cannot be undone.')) return;
+
+      decisions.forEach((decision, index) => {
+        decision.action = 'pending';
+        decision.comment = '';
+        const card = document.querySelector(\`.card[data-index="\${index}"]\`);
+        card.classList.remove('accepted', 'rejected', 'commented');
+        card.querySelector('.accept-btn').classList.remove('active');
+        card.querySelector('.reject-btn').classList.remove('active');
+        card.querySelector('.comment-btn').classList.remove('active');
+        const commentSection = card.querySelector(\`#comment-\${index}\`);
+        commentSection.style.display = 'none';
+        commentSection.querySelector('textarea').value = '';
+      });
+
+      saveDecisions();
+      updateSummary();
+    }
+
+    // Export decisions to clipboard
+    async function exportDecisions() {
+      const exportData = {
+        version: 1,
+        totalCards: cardMetadata.length,
+        decisions: decisions.map((decision, index) => ({
+          index: decision.index,
+          id: decision.id,
+          action: decision.action,
+          comment: decision.comment,
+          cardPreview: cardMetadata[index].preview
+        })),
+        summary: {
+          accepted: decisions.filter(d => d.action === 'accept').length,
+          rejected: decisions.filter(d => d.action === 'reject').length,
+          pending: decisions.filter(d => d.action === 'pending').length,
+          commented: decisions.filter(d => d.comment.trim()).length
+        }
+      };
+
+      const jsonString = JSON.stringify(exportData, null, 2);
+
+      try {
+        await navigator.clipboard.writeText(jsonString);
+
+        // Success feedback
+        const btn = document.getElementById('export-btn');
+        btn.classList.add('success');
+        btn.textContent = '✓ Copied to Clipboard!';
+
+        setTimeout(() => {
+          btn.classList.remove('success');
+          btn.textContent = '📋 Copy Decisions to Clipboard';
+        }, 2000);
+      } catch (err) {
+        alert('Failed to copy to clipboard. Please check browser permissions.');
+        console.error('Copy failed:', err);
+      }
+    }
 
     // Dark mode toggle
     function toggleDarkMode() {
@@ -555,6 +1028,9 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
+      // Don't trigger when typing in textarea
+      if (e.target.tagName === 'TEXTAREA') return;
+
       if (e.key === ' ' || e.key === 'Spacebar') {
         e.preventDefault();
         revealAllClozes();
@@ -562,11 +1038,16 @@ export function renderNotesToHtml(notes: PreviewNote[]): string {
         hideAllClozes();
       } else if (e.key === 'd' || e.key === 'D') {
         toggleDarkMode();
+      } else if (e.key === 'e' || e.key === 'E') {
+        exportDecisions();
       }
     });
 
+    // Initialize on load
+    initDecisions();
+
     console.log('Anki Card Preview loaded');
-    console.log('Keyboard shortcuts: Space = Reveal all, H = Hide all, D = Dark mode');
+    console.log('Keyboard shortcuts: Space = Reveal all, H = Hide all, D = Dark mode, E = Export');
   </script>
 </body>
 </html>`;
