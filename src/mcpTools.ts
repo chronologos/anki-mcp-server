@@ -305,6 +305,24 @@ export class McpToolHandler {
 						required: ["name", "fields", "templates"],
 					},
 				},
+				{
+					name: "gui_selected_notes",
+					description: "Get the selected notes from the Anki GUI browser",
+					inputSchema: {
+						type: "object",
+						properties: {},
+						required: [],
+					},
+				},
+				{
+					name: "gui_current_card",
+					description: "Get the current card being shown in Anki GUI",
+					inputSchema: {
+						type: "object",
+						properties: {},
+						required: [],
+					},
+				},
 			],
 		};
 	}
@@ -353,6 +371,12 @@ export class McpToolHandler {
 					return this.updateNote(args);
 				case "delete_note":
 					return this.deleteNote(args);
+
+				// GUI tools
+				case "gui_selected_notes":
+					return this.guiSelectedNotes();
+				case "gui_current_card":
+					return this.guiCurrentCard();
 
 				// Dynamic model-specific note creation
 				default: {
@@ -958,6 +982,86 @@ export class McpToolHandler {
 						null,
 						2
 					),
+				},
+			],
+		};
+	}
+
+	/**
+	 * Get selected notes from Anki GUI
+	 */
+	private async guiSelectedNotes(): Promise<{
+		content: {
+			type: string;
+			text: string;
+		}[];
+	}> {
+		const selectedNoteIds = await this.ankiClient.guiSelectedNotes();
+
+		// If there are selected notes, get their detailed information
+		let notes: {
+			noteId: number;
+			modelName: string;
+			tags: string[];
+			fields: Record<string, { value: string; order: number }>;
+		}[] = [];
+		if (selectedNoteIds.length > 0) {
+			const notesInfo = await this.ankiClient.notesInfo(selectedNoteIds);
+			notes = notesInfo;
+		}
+
+		return {
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify(
+						{
+							selectedNoteIds,
+							count: selectedNoteIds.length,
+							notes,
+						},
+						null,
+						2
+					),
+				},
+			],
+		};
+	}
+
+	/**
+	 * Get current card from Anki GUI
+	 */
+	private async guiCurrentCard(): Promise<{
+		content: {
+			type: string;
+			text: string;
+		}[];
+	}> {
+		const currentCard = await this.ankiClient.guiCurrentCard();
+
+		if (!currentCard) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify(
+							{
+								currentCard: null,
+								message: "No card is currently being shown in Anki",
+							},
+							null,
+							2
+						),
+					},
+				],
+			};
+		}
+
+		return {
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify(currentCard, null, 2),
 				},
 			],
 		};
