@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "mcp__anki__list_decks",
+      "WebFetch(domain:buildkite.com)",
+      "mcp__anki__get_note_info",
+      "WebFetch(domain:nixos.org)",
+      "mcp__anki__search_notes",
+      "Read(//Users/iantay/.claude/agents/**)",
+      "Read(//Users/iantay/**)",
+      "Skill(anki-flashcard-master)",
+      "mcp__anki__gui_selected_notes",
+      "WebFetch(domain:timilearning.com)",
+      "WebFetch(domain:www.rfc-editor.org)",
+      "WebFetch(domain:docs.temporal.io)",
+      "WebFetch(domain:datatracker.ietf.org)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "anki"
+  ],
+  "outputStyle": "anki-creator"
+}

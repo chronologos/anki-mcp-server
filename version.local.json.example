@@ -1,0 +1,4 @@
+{
+  "version": "0.1.26",
+  "note": "This file tracks the version for @iantay/anki-mcp-server scoped publishing. Copy this to version.local.json and update the version to match your latest npm publish."
+}
