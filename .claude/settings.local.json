@@ -14,7 +14,16 @@
       "WebFetch(domain:timilearning.com)",
       "WebFetch(domain:www.rfc-editor.org)",
       "WebFetch(domain:docs.temporal.io)",
-      "WebFetch(domain:datatracker.ietf.org)"
+      "WebFetch(domain:datatracker.ietf.org)",
+      "Bash(curl:*)",
+      "WebFetch(domain:google.github.io)",
+      "WebFetch(domain:packaging.python.org)",
+      "WebFetch(domain:softwareengineering.stackexchange.com)",
+      "mcp__anki__update_note",
+      "WebFetch(domain:monkey.org)",
+      "Bash(cat:*)",
+      "mcp__anki__batch_create_notes",
+      "mcp__anki__delete_note"
     ]
   },
   "enableAllProjectMcpServers": true,
