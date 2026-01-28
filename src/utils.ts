@@ -349,10 +349,7 @@ export class AnkiClient {
 	/**
 	 * Update note fields
 	 */
-	async updateNoteFields(params: {
-		id: number;
-		fields: Record<string, string>;
-	}): Promise<void> {
+	async updateNoteFields(params: { id: number; fields: Record<string, string> }): Promise<void> {
 		try {
 			await this.executeWithRetry(() =>
 				this.client.note.updateNoteFields({

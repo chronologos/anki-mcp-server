@@ -28,8 +28,10 @@ export class AnkiMcpServer {
 
 	/**
 	 * Constructor
+	 * @param port AnkiConnect port (default: 8765)
+	 * @param mediaPath Path to Anki's collection.media folder (optional, required for extract_note_media)
 	 */
-	constructor(port = 8765) {
+	constructor(port = 8765, mediaPath?: string) {
 		this.server = new Server(
 			{
 				name: "anki-connect-server",
@@ -52,7 +54,7 @@ export class AnkiMcpServer {
 			ankiConnectUrl: `http://localhost:${port}`,
 		});
 		this.resourceHandler = new McpResourceHandler();
-		this.toolHandler = new McpToolHandler();
+		this.toolHandler = new McpToolHandler({ mediaPath });
 
 		this.setupHandlers();
 

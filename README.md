@@ -19,6 +19,7 @@ A Model Context Protocol (MCP) server that enables LLMs to interact with Anki fl
 - `list_note_types` - List all available note types
 - `create_note_type` - Create a new note type
 - `get_note_type_info` - Get detailed structure of a note type
+- `extract_note_media` - Extract images/audio from a note to `/tmp/anki-media/{noteId}/` (requires `--media-path`)
 
 ### Resources
 
@@ -76,6 +77,29 @@ If your AnkiConnect is running on a different port, you can specify it using the
   }
 }
 ```
+
+#### Enabling Media Extraction
+
+To use the `extract_note_media` tool, you must configure the path to Anki's media folder using `--media-path`:
+
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "npx",
+      "args": [
+        "--yes", "anki-mcp-server",
+        "--media-path", "/Users/you/Library/Application Support/Anki2/User 1/collection.media"
+      ]
+    }
+  }
+}
+```
+
+The media path varies by platform:
+- **macOS**: `~/Library/Application Support/Anki2/<Profile>/collection.media`
+- **Windows**: `%APPDATA%\Anki2\<Profile>\collection.media`
+- **Linux**: `~/.local/share/Anki2/<Profile>/collection.media`
 
 ### Configuration for Cline
 

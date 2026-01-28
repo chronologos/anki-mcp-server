@@ -47,7 +47,7 @@ function bumpVersion(version, type) {
 const newVersion = bumpVersion(currentVersion, versionBump);
 
 console.log(
-	`📦 Publishing ${SCOPED_NAME}@${newVersion} (${versionBump} bump from ${currentVersion})...`,
+	`📦 Publishing ${SCOPED_NAME}@${newVersion} (${versionBump} bump from ${currentVersion})...`
 );
 
 try {
@@ -72,10 +72,7 @@ try {
 
 	// Update version.local.json with the new version
 	versionData.version = newVersion;
-	writeFileSync(
-		VERSION_FILE_PATH,
-		JSON.stringify(versionData, null, 2) + "\n",
-	);
+	writeFileSync(VERSION_FILE_PATH, JSON.stringify(versionData, null, 2) + "\n");
 	console.log(`✅ Updated ${VERSION_FILE_PATH} to version ${newVersion}`);
 
 	// Restore original package.json

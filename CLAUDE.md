@@ -60,7 +60,7 @@ npm run check
 
 ### Core Components
 
-- **`src/index.ts`**: Entry point that parses CLI arguments (`--port` flag) and initializes AnkiMcpServer
+- **`src/index.ts`**: Entry point that parses CLI arguments (`--port`, `--media-path` flags) and initializes AnkiMcpServer
 - **`src/ankiMcpServer.ts`**: Main server class that handles MCP protocol communication, request routing, and connection checks
 - **`src/mcpTools.ts`**: Implements all MCP tool handlers for Anki operations (create/update/delete notes, manage decks)
 - **`src/mcpResource.ts`**: Handles MCP resource endpoints with caching for note type schemas (5-minute TTL)
@@ -97,6 +97,7 @@ The server implements the following tools:
 - `get_note_type_info` - Get detailed structure of a note type
 - `gui_selected_notes` - Get selected notes from Anki browser (returns note IDs and full note details)
 - `gui_current_card` - Get current card being reviewed in Anki GUI
+- `extract_note_media` - Extract images/audio from a note to `/tmp/anki-media/{noteId}/` (requires `--media-path`)
 
 ### MCP Resources Available
 
@@ -155,6 +156,7 @@ The preview system allows users to review cards in a browser before creating the
 ### Runtime Requirements
 - The server requires Anki and AnkiConnect addon to be running
 - Default AnkiConnect port is 8765, configurable via `--port` flag
+- Media extraction requires `--media-path` flag pointing to Anki's `collection.media` folder (e.g., `--media-path '/Users/you/Library/Application Support/Anki2/User 1/collection.media'`)
 - The server communicates via stdio with the MCP client
 
 ### Version Management

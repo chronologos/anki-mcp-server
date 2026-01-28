@@ -17,7 +17,11 @@ function parseArgs() {
 		process.exit(1);
 	}
 
-	return { port };
+	const mediaPathIndex = args.indexOf("--media-path");
+	const mediaPath =
+		mediaPathIndex !== -1 && args[mediaPathIndex + 1] ? args[mediaPathIndex + 1] : undefined;
+
+	return { port, mediaPath };
 }
 
 /**
@@ -25,8 +29,8 @@ function parseArgs() {
  */
 async function main() {
 	try {
-		const { port } = parseArgs();
-		const server = new AnkiMcpServer(port);
+		const { port, mediaPath } = parseArgs();
+		const server = new AnkiMcpServer(port, mediaPath);
 		await server.run();
 	} catch (error) {
 		console.error("Failed to start Anki MCP Server:", error);

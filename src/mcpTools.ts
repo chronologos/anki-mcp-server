@@ -1,6 +1,8 @@
 /**
  * MCP Tool handlers for Anki
  */
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import type { PreviewNote } from "./cardRenderer.js";
 import { renderNotesToHtml } from "./cardRenderer.js";
@@ -8,13 +10,22 @@ import { previewInBrowser } from "./previewServer.js";
 import { AnkiClient } from "./utils.js";
 
 /**
+ * Configuration for the tool handler
+ */
+export interface McpToolConfig {
+	mediaPath?: string;
+}
+
+/**
  * Handles all MCP tool operations for Anki
  */
 export class McpToolHandler {
 	private ankiClient: AnkiClient;
+	private mediaPath?: string;
 
-	constructor() {
+	constructor(config: McpToolConfig = {}) {
 		this.ankiClient = new AnkiClient();
+		this.mediaPath = config.mediaPath;
 	}
 
 	/**
@@ -373,6 +384,25 @@ export class McpToolHandler {
 						required: ["notes"],
 					},
 				},
+				{
+					name: "extract_note_media",
+					description:
+						"Extract images and media files from a note to /tmp/anki-media/{noteId}/. Parses note fields for <img> tags and [sound:] references, copies files from Anki's media folder. Returns paths to extracted files. Requires --media-path to be configured.",
+					inputSchema: {
+						type: "object",
+						properties: {
+							noteId: {
+								type: "number",
+								description: "Note ID to extract media from",
+							},
+							outputDir: {
+								type: "string",
+								description: "Custom output directory (default: /tmp/anki-media/{noteId})",
+							},
+						},
+						required: ["noteId"],
+					},
+				},
 			],
 		};
 	}
@@ -431,6 +461,10 @@ export class McpToolHandler {
 				// Preview tool
 				case "batch_preview_notes":
 					return this.batchPreviewNotes(args);
+
+				// Media extraction tool
+				case "extract_note_media":
+					return this.extractNoteMedia(args);
 
 				// Dynamic model-specific note creation
 				default: {
@@ -589,10 +623,7 @@ export class McpToolHandler {
 	/**
 	 * Get note type info
 	 */
-	private async getNoteTypeInfo(args: {
-		modelName: string;
-		includeCss?: boolean;
-	}): Promise<{
+	private async getNoteTypeInfo(args: { modelName: string; includeCss?: boolean }): Promise<{
 		content: {
 			type: string;
 			text: string;
@@ -1124,10 +1155,7 @@ export class McpToolHandler {
 	/**
 	 * Preview notes in browser before creating them in Anki
 	 */
-	private async batchPreviewNotes(args: {
-		notes: PreviewNote[];
-		port?: number;
-	}): Promise<{
+	private async batchPreviewNotes(args: { notes: PreviewNote[]; port?: number }): Promise<{
 		content: {
 			type: string;
 			text: string;
@@ -1170,6 +1198,132 @@ export class McpToolHandler {
 							port: result.port,
 							message: result.message,
 							notesCount: args.notes.length,
+						},
+						null,
+						2
+					),
+				},
+			],
+		};
+	}
+
+	/**
+	 * Extract media files from a note to a local directory
+	 */
+	private async extractNoteMedia(args: { noteId: number; outputDir?: string }): Promise<{
+		content: {
+			type: string;
+			text: string;
+		}[];
+	}> {
+		if (!args.noteId) {
+			throw new McpError(ErrorCode.InvalidParams, "Note ID is required");
+		}
+
+		if (!this.mediaPath) {
+			throw new McpError(
+				ErrorCode.InvalidParams,
+				"Media path not configured. Please set --media-path when starting the server (e.g., --media-path '/Users/you/Library/Application Support/Anki2/User 1/collection.media')"
+			);
+		}
+
+		// Get note info
+		const notesInfo = await this.ankiClient.notesInfo([args.noteId]);
+		if (!notesInfo || notesInfo.length === 0) {
+			throw new McpError(ErrorCode.InvalidParams, `Note not found: ${args.noteId}`);
+		}
+
+		const note = notesInfo[0];
+
+		// Parse all fields to find media references
+		const mediaFiles = new Set<string>();
+
+		for (const fieldName of Object.keys(note.fields)) {
+			const fieldValue = note.fields[fieldName].value;
+
+			// Find <img src="..."> tags
+			const imgMatches = fieldValue.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi);
+			for (const match of imgMatches) {
+				mediaFiles.add(match[1]);
+			}
+
+			// Find [sound:...] references
+			const soundMatches = fieldValue.matchAll(/\[sound:([^\]]+)\]/gi);
+			for (const match of soundMatches) {
+				mediaFiles.add(match[1]);
+			}
+		}
+
+		if (mediaFiles.size === 0) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify(
+							{
+								noteId: args.noteId,
+								message: "No media files found in note",
+								extracted: [],
+							},
+							null,
+							2
+						),
+					},
+				],
+			};
+		}
+
+		// Create output directory
+		const outputDir = args.outputDir || `/tmp/anki-media/${args.noteId}`;
+		if (!fs.existsSync(outputDir)) {
+			fs.mkdirSync(outputDir, { recursive: true });
+		}
+
+		// Copy each media file
+		const extracted: { filename: string; path: string; size: number }[] = [];
+		const failed: { filename: string; error: string }[] = [];
+
+		for (const filename of mediaFiles) {
+			const sourcePath = path.join(this.mediaPath, filename);
+			const destPath = path.join(outputDir, filename);
+
+			try {
+				if (!fs.existsSync(sourcePath)) {
+					failed.push({ filename, error: "File not found in media folder" });
+					continue;
+				}
+
+				fs.copyFileSync(sourcePath, destPath);
+				const stats = fs.statSync(destPath);
+				extracted.push({
+					filename,
+					path: destPath,
+					size: stats.size,
+				});
+			} catch (error) {
+				failed.push({
+					filename,
+					error: error instanceof Error ? error.message : String(error),
+				});
+			}
+		}
+
+		return {
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify(
+						{
+							noteId: args.noteId,
+							outputDir,
+							mediaPath: this.mediaPath,
+							extracted,
+							failed,
+							summary: {
+								found: mediaFiles.size,
+								extracted: extracted.length,
+								failed: failed.length,
+							},
 						},
 						null,
 						2
